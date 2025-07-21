@@ -1,7 +1,7 @@
 from mobile_manipulator_unicycle import MobileManipulatorUnicycle
 import time
 
-robot = MobileManipulatorUnicycle(robot_id=1, backend_server_ip="192.168.0.2")
+robot = MobileManipulatorUnicycle(robot_id=7, backend_server_ip="192.168.0.2")
 
 print("Move forward for 2 seconds and set the LEDs red")
 start_time = time.time()
