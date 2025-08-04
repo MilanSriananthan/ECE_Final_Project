@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import csv
 
 # Connect to the robot
-robot = MobileManipulatorUnicycle(robot_id=7, backend_server_ip="192.168.0.2")
+robot = MobileManipulatorUnicycle(robot_id=4, backend_server_ip="192.168.0.2")
 
 # Define Hermite spline parameters
 T = 20.0

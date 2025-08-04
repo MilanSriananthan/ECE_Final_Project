@@ -6,7 +6,24 @@ import matplotlib.pyplot as plt
 import csv
 
 # Connect to the robot
-robot = MobileManipulatorUnicycle(robot_id=7, backend_server_ip="192.168.0.2")
+robot = MobileManipulatorUnicycle(robot_id=4, backend_server_ip="192.168.0.2")
+
+start_time = time.time()
+while time.time() - start_time < 2.:
+    robot.set_mobile_base_speed_and_gripper_power(v=0.5, omega=0.0, gripper_power=0.0)
+    robot.set_leds(255, 0, 0)
+    time.sleep(0.05)
+# Main loop
+
+start_time = time.time()
+while time.time() - start_time < 2.:
+    robot.set_mobile_base_speed_and_gripper_power(v=-0.5, omega=0.0, gripper_power=0.0)
+    robot.set_leds(255, 0, 0)
+    time.sleep(0.05)
+
+
+time.sleep(2)
+starting_pose = robot.get_poses()[0]
 
 # Define Hermite spline parameters
 T = 20.0
@@ -14,8 +31,10 @@ N = 100  # Increased for better velocity estimation
 t_vals = np.linspace(0, T, N)
 
 # Start and goal
-x_s, y_s, theta_s = 0.0, 0.0, 0.0
-x_g, y_g, theta_g = 1.0, 1.0, -np.pi / 6
+print (starting_pose)
+x_s, y_s, theta_s = starting_pose
+print(x_s,y_s,theta_s)
+x_g, y_g, theta_g = x_s+1.0, y_s+1.0, theta_s -np.pi / 6
 v_mag = 0.1
 
 dx_s = v_mag * np.cos(theta_s)
@@ -44,8 +63,8 @@ dt = T / N
 start_time = time.time()
 
 # Feedback controller gains (tune these as needed)
-Kp = 2.0  # Proportional gain
-Kd = 1.0  # Derivative gain
+Kp = 2  # Proportional gain
+Kd = 1  # Derivative gain
 
 # LED colors: orange for movement
 r, g, b = 255, 165, 0
@@ -59,11 +78,13 @@ time_values = []
 
 # Initialize variables for velocity estimation
 prev_x, prev_y = None, None
-
 # Main loop
+
 for i in range(N):
+    print (i)
     # Get current pose
     current_pose = robot.get_poses()[0]
+    print(current_pose)
     x, y, theta = current_pose
     pose_list.append(np.array(current_pose))
     
@@ -92,8 +113,13 @@ for i in range(N):
     # Note: We use the desired velocities in the transformation
     # to avoid singularities when current velocity is near zero
     v = v_ff[i] + np.sqrt(ux**2 + uy**2) * np.sign(v_ff[i])
-    omega = omega_ff[i] + (ux * dy_d[i] - uy * dx_d[i]) / (dx_d[i]**2 + dy_d[i]**2 + 1e-5)
-    
+    v = np.clip(v, 0.0, 1)
+    # omega = omega_ff[i] + (ux * dy_d[i] - uy * dx_d[i]) / (dx_d[i]**2 + dy_d[i]**2 + 1e-5)
+    denom = dx_d[i]**2 + dy_d[i]**2
+    if denom < 1e-3:
+        denom = 1e-3
+    omega = omega_ff[i] + (ux * dy_d[i] - uy * dx_d[i]) / denom
+    # omega = np.clip(omega, -1.5, 1.5)
     # Store values for plotting
     v_fb_values.append(v)
     omega_fb_values.append(omega)
@@ -104,7 +130,7 @@ for i in range(N):
     
     # Maintain timing
     while time.time() < start_time + (i + 1) * dt:
-        time.sleep(0.001)
+        time.sleep(0.01)
 
 # Stop at the end
 robot.set_mobile_base_speed_and_gripper_power(0.0, 0.0, 0.0)
@@ -115,8 +141,8 @@ print("Final robot pose:", final_pose)
 
 # Process collected data
 x_actual = [pose[0] for pose in pose_list]
-y_actual = [pose[1] for pose in pose_list]
-
+y_actual = [-pose[1] for pose in pose_list]
+y_d_flipped = [-y for y in y_d]
 # Plot actual vs desired trajectory
 plt.figure(figsize=(10, 8))
 plt.plot(y_actual, x_actual, 'b-', label='Actual Trajectory')

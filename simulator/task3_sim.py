@@ -37,8 +37,8 @@ v_ff = np.sqrt(dx_d**2 + dy_d**2)
 omega_ff = (ddy_d * dx_d - ddx_d * dy_d) / (dx_d**2 + dy_d**2 + 1e-5)
 
 # --- Gains ---
-Kp = 1
-Kd = 1
+Kp = 0.0001
+Kd = 0.0001
 
 # --- Simulator Init ---
 robot = MobileManipulatorUnicycleSim(
